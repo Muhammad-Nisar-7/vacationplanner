@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compact Employee Task Table with Calendars</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse black;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 5px;
+            text-align: center;
+            vertical-align: top;
+        }
+        th {
+            background-color: #e79a9a;
+            font-size: 15px;
+        }
+        .calendar {
+            border: 1px solid #ddd;
+            width: 120px;
+            font-size: 10px;
+            margin: auto;
+        }
+        .calendar h4 {
+            margin: 0;
+            background-color: #964444;
+            padding: 3px;
+            text-align: center;
+            font-size: 10px;
+        }
+        .days, .dates {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+        }
+        .days div {
+            font-weight: bold;
+            padding: 1px;
+        }
+        .dates div {
+            padding: 1px;
+            border-radius: 2px;
+        }
+        .highlight {
+            background-color: #fcff63;
+        }
+        .status-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .status-buttons button {
+            padding: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .status-buttons .approve {
+            background-color: rgb(203, 252, 203);
+            color: white;
+        }
+        .status-buttons .reject {
+            background-color: rgb(252, 188, 188);
+            color: white;
+        }
+        .status-buttons .reset {
+            background-color: gray;
+            color: white;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1><center>Employee Vacation Planner - 2025</center></h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Status</th>
+                <th>Employee Name</th>
+                <th>Company</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th colspan="12">2025 Monthly Calendars</th>
+            </tr>
+        </thead>
+        <tbody id="task-table">
+            <!-- Rows will be dynamically generated -->
+        </tbody>
+    </table>
+
+    <button id="save-btn" onclick="saveData()">Save Data</button>
+
+    <script>
+        // Days of the week
+        const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+        // Function to create a calendar for a given month and year with highlights
+        function createCalendar(month, year, highlights) {
+            const calendarDiv = document.createElement('div');
+            calendarDiv.classList.add('calendar');
+
+            const monthName = new Date(year, month).toLocaleString('default', { month: 'long' });
+            const header = document.createElement('h4');
+            header.textContent = monthName;
+            calendarDiv.appendChild(header);
+
+            const daysDiv = document.createElement('div');
+            daysDiv.classList.add('days');
+            days.forEach(day => {
+                const dayDiv = document.createElement('div');
+                dayDiv.textContent = day;
+                daysDiv.appendChild(dayDiv);
+            });
+            calendarDiv.appendChild(daysDiv);
+
+            const datesDiv = document.createElement('div');
+            datesDiv.classList.add('dates');
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDiv = document.createElement('div');
+                datesDiv.appendChild(emptyDiv);
+            }
+
+            for (let date = 1; date <= daysInMonth; date++) {
+                const dateDiv = document.createElement('div');
+                dateDiv.textContent = date;
+
+                const fullDate = new Date(year, month, date).toISOString().split('T')[0];
+                if (highlights.includes(fullDate)) {
+                    dateDiv.classList.add('highlight');
+                }
+
+                datesDiv.appendChild(dateDiv);
+            }
+
+            calendarDiv.appendChild(datesDiv);
+            return calendarDiv;
+        }
+
+        // Task data passed from Django view
+        const tasks = {{ tasks|safe }};  // Safely inject the Python variable into JS
+
+        const statusData = [];
+
+        const tableBody = document.getElementById('task-table');
+
+        tasks.forEach(task => {
+            const row = document.createElement('tr');
+
+            // Status column with approve, reject, and reset buttons
+            const statusCell = document.createElement('td');
+            const statusButtons = document.createElement('div');
+            statusButtons.classList.add('status-buttons');
+
+            const approveButton = document.createElement('button');
+            approveButton.classList.add('approve');
+            approveButton.textContent = '✔️';
+            approveButton.onclick = () => handleStatusChange(row, 'approved', task.name);
+
+            const rejectButton = document.createElement('button');
+            rejectButton.classList.add('reject');
+            rejectButton.textContent = '❌';
+            rejectButton.onclick = () => handleStatusChange(row, 'rejected', task.name);
+
+            const resetButton = document.createElement('button');
+            resetButton.classList.add('reset');
+            resetButton.textContent = '🔄'; // Circular arrow symbol for reset
+            resetButton.onclick = () => resetStatus(row);
+
+            statusButtons.appendChild(approveButton);
+            statusButtons.appendChild(rejectButton);
+            statusButtons.appendChild(resetButton);
+            statusCell.appendChild(statusButtons);
+            row.appendChild(statusCell);
+
+            // Employee details
+            const nameCell = document.createElement('td');
+            // nameCell.style.backgroundColor = "#cf8484";
+            nameCell.textContent = task.name;
+            row.appendChild(nameCell);
+
+            const companyCell = document.createElement('td');
+            // nameCell.style.backgroundColor = "#cf8484";
+            companyCell.textContent = task.Company;
+            row.appendChild(companyCell);
+
+
+            const startDateCell = document.createElement('td');
+            // startDateCell.style.backgroundColor = "#cf8484";
+            startDateCell.textContent = task.startDate;
+            row.appendChild(startDateCell);
+
+            const endDateCell = document.createElement('td');
+            // endDateCell.style.backgroundColor = "#cf8484";
+            endDateCell.textContent = task.endDate;
+            row.appendChild(endDateCell);
+
+            // Generate 12 calendars for each month
+            for (let month = 0; month < 12; month++) {
+                const cell = document.createElement('td');
+
+                const highlights = [];
+                
+                const start = new Date(task.startDate);
+                const end = new Date(task.endDate);
+
+                if (!isNaN(start) && !isNaN(end)) {
+                    for (let d = new Date(start-1); d < end; d.setDate(d.getDate() + 1)) {
+                        if (!isNaN(d)) {
+                            highlights.push(new Date(d).toISOString().split('T')[0]);
+                        }
+                    }
+                }
+
+                const calendar = createCalendar(month, 2025, highlights);
+                cell.appendChild(calendar);
+                row.appendChild(cell);
+            }
+
+            tableBody.appendChild(row);
+        });
+
+        // Function to handle status change (approve/reject)
+        function handleStatusChange(row, status, employeeName) {
+            const statusCell = row.querySelector('td:first-child');
+            const statusButtons = statusCell.querySelector('.status-buttons');
+
+            // Reset row background color
+            row.style.backgroundColor = '';
+
+            if (status === 'approved') {
+                row.style.backgroundColor = '#99f0af';
+                statusButtons.querySelector('.approve').disabled = true;
+                statusButtons.querySelector('.reject').disabled = false;
+            } else if (status === 'rejected') {
+                row.style.backgroundColor = '#FF7F7F';
+                statusButtons.querySelector('.approve').disabled = false;
+                statusButtons.querySelector('.reject').disabled = true;
+            }
+
+            // Update status data
+            const existingIndex = statusData.findIndex(item => item.name === employeeName);
+            if (existingIndex !== -1) {
+                statusData[existingIndex].status = status;
+            } else {
+                statusData.push({ name: employeeName, status: status });
+            }
+        }
+
+        // Function to reset the row status to its default color
+        function resetStatus(row) {
+            const statusCell = row.querySelector('td:first-child');
+            const statusButtons = statusCell.querySelector('.status-buttons');
+
+            // Reset button states
+            statusButtons.querySelector('.approve').disabled = false;
+            statusButtons.querySelector('.reject').disabled = false;
+            row.style.backgroundColor = '';
+        }
+
+        // Function to save data as an Excel file
+        function saveData() {
+            const rows = document.querySelectorAll('#task-table tr');
+            const data = [];
+
+            rows.forEach(row => {
+                const statusCell = row.cells[0];
+                const nameCell = row.cells[1];
+                const startDateCell = row.cells[2];
+                const endDateCell = row.cells[3];
+
+                if (nameCell && startDateCell && endDateCell) {
+                    const status = statusCell.querySelector('.approve').disabled ? 'approved' :
+                                   (statusCell.querySelector('.reject').disabled ? 'rejected' : 'pending');
+
+                    data.push({
+                        Name: nameCell.textContent,
+                        'Start Date': startDateCell.textContent,
+                        'End Date': endDateCell.textContent,
+                        Status: status
+                    });
+                }
+            });
+
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Employee Status');
+
+            XLSX.writeFile(wb, 'employee_vacation_status.xlsx');
+        }
+    </script>
+</body>
+</html>

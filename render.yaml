@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: planner
+    buildCommand: "./build.sh"
+    env: python
+    startCommand: "gunicorn vacationplanner.wsgi:application"
