@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-l)*=csm!-#3is+x@&fw8vcyokpns1&h9g^p%js#s=pm=%l!!1t
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*','vacationplanner-1.onrender.com']
 
 
 # Application definition
