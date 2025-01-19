@@ -35,9 +35,9 @@ def home(request):
         df['D.O.J'] = pd.to_datetime(df['D.O.J'], errors='coerce')
 
         # Convert the dates to ISO format (string) for JavaScript
-        df['Start Date'] = df['Start Date'].dt.strftime('%Y-%m-%d')
-        df['End Date'] = df['End Date'].dt.strftime('%Y-%m-%d')
-        df['D.O.J'] = df['D.O.J'].dt.strftime('%Y-%m-%d')
+        df['Start Date'] = df['Start Date'].dt.strftime('%d-%m-%Y')
+        df['End Date'] = df['End Date'].dt.strftime('%d-%m-%Y')
+        df['D.O.J'] = df['D.O.J'].dt.strftime('%d-%m-%Y')
 
         # Convert the data to a list of dictionaries with 'name', 'startDate', 'endDate'
         employees = df[['Name','Replacement', 'Company','D.O.J', 'Start Date', 'End Date']].rename(columns={
