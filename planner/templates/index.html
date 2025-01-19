@@ -303,7 +303,7 @@
                 const end = new Date(task.endDate);
 
                 if (!isNaN(start) && !isNaN(end)) {
-                    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+                    for (let d = new Date(start-1); d < end; d.setDate(d.getDate() + 1)) {
                         if (!isNaN(d)) {
                             highlights.push(new Date(d).toISOString().split('T')[0]);
                         }
@@ -379,11 +379,29 @@
                 } else {
                     replacementDetails += `<li><strong>${replacementName}</strong><ul>`;
                     replacementTasks.forEach(task => {
+                        const startDate = new Date(task.startDate);
+                        const endDate = new Date(task.endDate);
+
+                        // Format the date as "Day Month Name Year"
+                        const startFormatted = startDate.toLocaleDateString('en-US', {
+                            weekday: 'long', // Day of the week
+                            month: 'long',   // Month name
+                            day: 'numeric',  // Day number
+                            year: 'numeric'  // Year number
+                        });
+
+                        const endFormatted = endDate.toLocaleDateString('en-US', {
+                            weekday: 'long', // Day of the week
+                            month: 'long',   // Month name
+                            day: 'numeric',  // Day number
+                            year: 'numeric'  // Year number
+                        });
+
                         replacementDetails += `
                             <li>
                                 <strong>DOJ:</strong> ${task.DOJ}<br>
-                                <strong>Leave Start Date:</strong> ${task.startDate}<br>
-                                <strong>Leave End Date:</strong> ${task.endDate}
+                                <strong>Leave Start Date:</strong> ${startFormatted}<br>
+                                <strong>Leave End Date:</strong> ${endFormatted}
                             </li>`;
                     });
                     replacementDetails += `</ul></li>`;
