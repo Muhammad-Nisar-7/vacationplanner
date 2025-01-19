@@ -418,8 +418,8 @@
             rows.forEach(row => {
                 const statusCell = row.cells[0];
                 const nameCell = row.cells[1];
-                const startDateCell = row.cells[2];
-                const endDateCell = row.cells[3];
+                const startDateCell = row.cells[5];
+                const endDateCell = row.cells[6];
 
                 if (nameCell && startDateCell && endDateCell) {
                     const status = statusCell.querySelector('.approve').disabled ? 'approved' :
