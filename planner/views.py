@@ -27,6 +27,7 @@ def home(request):
         df = df.dropna(subset=['Name'])
         df = df.dropna(subset=['Start Date'])
         df = df.dropna(subset=['D.O.J'])
+        df = df.dropna(subset=['Replacement'])
 
         # Ensure date columns are properly parsed
         df['Start Date'] = pd.to_datetime(df['Start Date'], errors='coerce')
@@ -39,8 +40,9 @@ def home(request):
         df['D.O.J'] = df['D.O.J'].dt.strftime('%Y-%m-%d')
 
         # Convert the data to a list of dictionaries with 'name', 'startDate', 'endDate'
-        employees = df[['Name', 'Company','D.O.J', 'Start Date', 'End Date']].rename(columns={
+        employees = df[['Name','Replacement', 'Company','D.O.J', 'Start Date', 'End Date']].rename(columns={
             'Name': 'name',
+            'Replacement':'Replacement',
             'Company': 'Company',
             'D.O.J':'DOJ',
             'Start Date': 'startDate',
