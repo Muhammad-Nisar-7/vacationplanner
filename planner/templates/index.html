@@ -119,6 +119,28 @@
             cursor: pointer;
             margin-top: 5px; /* Add spacing between the name and the icon */
         }
+
+        /* Floating Save button with file icon */
+        #save-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            padding: 15px;
+            font-size: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            border: none;
+            z-index: 9999;
+        }
+        #save-btn:hover {
+            background-color: #45a049;
+        }
+        #save-btn:focus {
+            outline: none;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 </head>
@@ -142,7 +164,8 @@
         </tbody>
     </table>
 
-    <button id="save-btn" onclick="saveData()">Save Data</button>
+    <!-- Floating Save button -->
+    <button id="save-btn" onclick="saveData()">📁</button>
 
     <script>
         // Days of the week
@@ -201,7 +224,7 @@
 
         const tableBody = document.getElementById('task-table');
 
-        tasks.forEach(task => {
+        tasks.forEach((task, index) => {
             const row = document.createElement('tr');
 
             // Status column with approve, reject, and reset buttons
@@ -239,12 +262,11 @@
             magnifyContainer.classList.add('magnify-container');
             const magnifyIcon = document.createElement('span');
             magnifyIcon.textContent = '🔍';  // The magnifying glass icon
-            magnifyIcon.setAttribute('data-employee', task.name);
-            magnifyIcon.setAttribute('data-replacement', task.Replacement);
+            magnifyIcon.setAttribute('data-employee-replacement', `${task.name}_${index}`);
 
             // Add event listener to show replacement details when clicked
             magnifyIcon.onclick = function() {
-                showReplacementDetails(task.name, task.Replacement);
+                showReplacementDetails(task.name, task.Replacement, index);
             };
 
             magnifyContainer.appendChild(magnifyIcon);
@@ -335,8 +357,8 @@
         }
 
         // Function to show replacement details in a tooltip
-        function showReplacementDetails(employeeName, replacementName) {
-            const replacementTasks = tasks.filter(task => task.name === replacementName);
+        function showReplacementDetails(employeeName, replacementNames, index) {
+            const replacementList = replacementNames.split(',').map(name => name.trim());
             const tooltip = document.createElement('div');
             tooltip.classList.add('tooltip');
             tooltip.style.position = 'absolute';
@@ -347,23 +369,32 @@
             tooltip.style.boxShadow = '0px 4px 6px rgba(0, 0, 0, 0.1)';
             tooltip.style.zIndex = '1000';
 
-            if (replacementTasks.length === 0) {
-                tooltip.innerHTML = `<strong>${replacementName}</strong><br>Not taking leave.`;
-            } else {
-                let replacementDetails = `<strong>${replacementName}</strong><ul>`;
-                replacementTasks.forEach(task => {
-                    replacementDetails += `
-                        <li>
-                            <strong>DOJ:</strong> ${task.DOJ}<br>
-                            <strong>Leave Start Date:</strong> ${task.startDate}<br>
-                            <strong>Leave End Date:</strong> ${task.endDate}
-                        </li>`;
-                });
-                replacementDetails += '</ul>';
-                tooltip.innerHTML = replacementDetails;
-            }
+            let replacementDetails = `<strong>Replacements:</strong><ul>`;
 
-            const magnifyButton = document.querySelector(`[data-employee="${employeeName}"][data-replacement="${replacementName}"]`);
+            replacementList.forEach(replacementName => {
+                const replacementTasks = tasks.filter(task => task.name === replacementName);
+
+                if (replacementTasks.length === 0) {
+                    replacementDetails += `<li><strong>${replacementName}</strong><br>Not taking leave.</li>`;
+                } else {
+                    replacementDetails += `<li><strong>${replacementName}</strong><ul>`;
+                    replacementTasks.forEach(task => {
+                        replacementDetails += `
+                            <li>
+                                <strong>DOJ:</strong> ${task.DOJ}<br>
+                                <strong>Leave Start Date:</strong> ${task.startDate}<br>
+                                <strong>Leave End Date:</strong> ${task.endDate}
+                            </li>`;
+                    });
+                    replacementDetails += `</ul></li>`;
+                }
+            });
+
+            replacementDetails += '</ul>';
+            tooltip.innerHTML = replacementDetails;
+
+            // Position the tooltip near the magnify button
+            const magnifyButton = document.querySelector(`[data-employee-replacement="${employeeName}_${index}"]`);
             const rect = magnifyButton.getBoundingClientRect();
             tooltip.style.top = `${rect.top + window.scrollY + 20}px`;
             tooltip.style.left = `${rect.left + window.scrollX + 20}px`;
