@@ -8,12 +8,12 @@
         body {
             font-family: Arial, sans-serif;
             font-size: 12px;
-            background-color: #f4f7fa; /* Light background color */
+            background-color: #f4f7fa;
             margin: 0;
             padding: 0;
         }
         h1 {
-            background-color: #4CAF50; /* Green header background */
+            background-color: #4CAF50;
             color: white;
             padding: 10px;
             font-size: 24px;
@@ -36,7 +36,7 @@
             vertical-align: top;
         }
         th {
-            background-color: #3e8e41; /* Darker green header background */
+            background-color: #3e8e41;
             color: white;
             font-size: 16px;
         }
@@ -54,7 +54,7 @@
         }
         .calendar h4 {
             margin: 0;
-            background-color: #4CAF50; /* Green header for the calendar */
+            background-color: #4CAF50;
             color: white;
             padding: 5px;
             font-size: 12px;
@@ -76,7 +76,7 @@
             border-radius: 2px;
         }
         .highlight {
-            background-color: #fcff63; /* Yellow highlight for date */
+            background-color: #fcff63;
         }
         .status-buttons {
             display: flex;
@@ -90,16 +90,37 @@
             border-radius: 4px;
         }
         .status-buttons .approve {
-            background-color: rgb(203, 252, 203); /* Light green for approve */
+            background-color: rgb(203, 252, 203);
             color: white;
         }
         .status-buttons .reject {
-            background-color: rgb(252, 188, 188); /* Light red for reject */
+            background-color: rgb(252, 188, 188);
             color: white;
         }
         .status-buttons .reset {
             background-color: gray;
             color: white;
+        }
+        .file-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 50%;
+            font-size: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            z-index: 9999;
+            border: none;
+        }
+        .file-btn:hover {
+            background-color: #45a049;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
@@ -111,6 +132,7 @@
             <tr>
                 <th>Status</th>
                 <th>Employee Name</th>
+                <th>Replacement</th>
                 <th>Company</th>
                 <th>D.O.J</th>
                 <th>Start Date</th>
@@ -123,7 +145,8 @@
         </tbody>
     </table>
 
-    <button id="save-btn" onclick="saveData()">Save Data</button>
+    <!-- Floating File Button -->
+    <button id="file-btn" class="file-btn" onclick="saveData()">📁</button>
 
     <script>
         // Days of the week
@@ -213,28 +236,36 @@
 
             // Employee details
             const nameCell = document.createElement('td');
-            // nameCell.style.backgroundColor = "#cf8484";
             nameCell.textContent = task.name;
+
+            // Magnifying logo under employee name
+            const magnifyingIcon = document.createElement('span');
+            magnifyingIcon.textContent = '🔍';
+            magnifyingIcon.style.cursor = 'pointer';
+            magnifyingIcon.style.display = 'block';
+            magnifyingIcon.style.textAlign = 'center';
+            magnifyingIcon.onclick = () => showTooltip(task.name, task.Replacement);
+            nameCell.appendChild(magnifyingIcon);
+
             row.appendChild(nameCell);
 
+            const repCell = document.createElement('td');
+            repCell.textContent = task.Replacement;
+            row.appendChild(repCell);
+
             const companyCell = document.createElement('td');
-            // nameCell.style.backgroundColor = "#cf8484";
             companyCell.textContent = task.Company;
             row.appendChild(companyCell);
 
             const DOJCell = document.createElement('td');
-            // nameCell.style.backgroundColor = "#cf8484";
             DOJCell.textContent = task.DOJ;
             row.appendChild(DOJCell);
 
-
             const startDateCell = document.createElement('td');
-            // startDateCell.style.backgroundColor = "#cf8484";
             startDateCell.textContent = task.startDate;
             row.appendChild(startDateCell);
 
             const endDateCell = document.createElement('td');
-            // endDateCell.style.backgroundColor = "#cf8484";
             endDateCell.textContent = task.endDate;
             row.appendChild(endDateCell);
 
@@ -243,7 +274,6 @@
                 const cell = document.createElement('td');
 
                 const highlights = [];
-                
                 const start = new Date(task.startDate);
                 const end = new Date(task.endDate);
 
@@ -268,7 +298,6 @@
             const statusCell = row.querySelector('td:first-child');
             const statusButtons = statusCell.querySelector('.status-buttons');
 
-            // Reset row background color
             row.style.backgroundColor = '';
 
             if (status === 'approved') {
@@ -281,7 +310,6 @@
                 statusButtons.querySelector('.reject').disabled = true;
             }
 
-            // Update status data
             const existingIndex = statusData.findIndex(item => item.name === employeeName);
             if (existingIndex !== -1) {
                 statusData[existingIndex].status = status;
@@ -295,10 +323,45 @@
             const statusCell = row.querySelector('td:first-child');
             const statusButtons = statusCell.querySelector('.status-buttons');
 
-            // Reset button states
             statusButtons.querySelector('.approve').disabled = false;
             statusButtons.querySelector('.reject').disabled = false;
             row.style.backgroundColor = '';
+        }
+
+        // Function to show replacement details in a tooltip
+        function showTooltip(employeeName, replacementName) {
+            const tooltip = document.createElement('div');
+            tooltip.style.position = 'absolute';
+            tooltip.style.backgroundColor = 'white';
+            tooltip.style.border = '1px solid #ddd';
+            tooltip.style.padding = '10px';
+            tooltip.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+            tooltip.style.zIndex = '9999';
+
+            const replacements = tasks.filter(task => task.Replacement === replacementName);
+            
+            tooltip.innerHTML = `<strong>Replacement Details for ${replacementName}</strong><br>`;
+            if (replacements.length === 0) {
+                tooltip.innerHTML += 'Not taking leave';
+            } else {
+                replacements.forEach(rep => {
+                    tooltip.innerHTML += `<ul><li><strong>DOJ:</strong> ${rep.DOJ}</li><li><strong>Leave Start Date:</strong> ${rep.startDate}</li><li><strong>Leave End Date:</strong> ${rep.endDate}</li></ul>`;
+                });
+            }
+
+            document.body.appendChild(tooltip);
+
+            // Position the tooltip under the employee name
+            const rect = event.target.getBoundingClientRect();
+            tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
+            tooltip.style.left = `${rect.left + window.scrollX}px`;
+
+            // Remove tooltip on click outside
+            document.addEventListener('click', (e) => {
+                if (!tooltip.contains(e.target) && !event.target.contains(e.target)) {
+                    tooltip.remove();
+                }
+            });
         }
 
         // Function to save data as an Excel file
